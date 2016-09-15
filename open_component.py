@@ -107,7 +107,6 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		path = curFolder+"/bitrix/components/"+self.getPathList()[index].replace(":","/")+"/component.php";
 		window.open_file(path)
-
 class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
@@ -320,3 +319,44 @@ class BitrixOpenJsCommand(sublime_plugin.TextCommand):
 class BitrixOpenInitCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		openFile('/bitrix/php_interface/init.php');
+class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
+	def getPathList(self):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		view = window.active_view();
+		file = view.file_name();
+		templateFolder = os.path.dirname(file)+"/";
+		if list(reversed(templateFolder.split('/')))[2] != "templates":
+			return
+
+		pathList = [];
+		pathList += map(lambda x: x, os.listdir(templateFolder));
+
+		if "template.php" in pathList:
+			if "component_epilog.php" not in pathList:
+				pathList += ["create:component_epilog.php"]
+			if "result_modifier.php" not in pathList:
+				pathList += ["create:result_modifier.php"]
+		return pathList;
+	def run(self): 
+		window = sublime.active_window();
+		# curFolder = window.folders()[0];
+		self.getPathList();
+		window.show_quick_panel(self.getPathList(), self.on_chosen)
+	def on_chosen(self, index):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		view = window.active_view();
+		file = view.file_name();
+		templateFolder = os.path.dirname(file)+"/";
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		el = self.getPathList()[index];
+		if "create:" not in el :
+			window.open_file(templateFolder+el)
+		else:
+			el=el.split(":")[1];
+			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
+			window.open_file(templateFolder+el)
