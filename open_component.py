@@ -74,13 +74,26 @@ def parsePhpInclude(self):
 			lineContents = self.view.substr(line)
 			if line.a < 5 :
 				break;
-
 		# reg to extract data
 		parser = re.search ('.*[requre|include].*\(.*["|\'](.*)["|\'].*\).*', lineContents)
-
-
 		# answer formilising
 		data = {"file": parser.group(1)}
+		return data;
+def parseWord(self):
+	for region in self.view.sel():
+		selected = region;
+		while not re.match('[\."\'\s]',self.view.substr(sublime.Region(selected.a-1,selected.a))):
+			selected = sublime.Region(selected.a-1,selected.b);
+			if selected.a < 5 :
+				break;
+
+		while not re.match('[\."\'\s]',self.view.substr(sublime.Region(selected.b,selected.b+1))):
+			selected = sublime.Region(selected.a,selected.b+1);
+			if selected.b > 20000 :
+				break;
+
+		# answer formilising
+		data = {"class": self.view.substr(selected)}
 		return data;
 
 class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
@@ -380,3 +393,15 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 			el=el.split(":")[1];
 			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
 			window.open_file(templateFolder+el)
+
+class BitrixOpenClassCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		window = sublime.active_window()
+		curFolder = window.folders()[0]
+		data = parseWord(self)
+		# print(data)
+		# window.open_file(filePath)
+		openFile('/bitrix/templates/main/template_styles.css');
+		search = '\.'+data['class']+'[\s]*[{]([^}]*)[}]';
+		fResult = window.active_view().find(search,0);
+		window.active_view().show_at_center(fResult);
