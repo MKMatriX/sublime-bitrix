@@ -116,29 +116,35 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		componentsFolder3 = curFolder+"/bitrix/templates/.default/components/";
 
 		pathList = [];
-		namespacesList = os.listdir(componentsFolder);
-		for namespace in namespacesList:
-			curDir = componentsFolder+namespace+"/";
-			cList = os.listdir(curDir);
-			for cName in cList:
-				curSubDir = curDir+cName+"/templates/";
-				pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
+		if os.path.exists(componentsFolder):
+			namespacesList = os.listdir(componentsFolder);
+			for namespace in namespacesList:
+				curDir = componentsFolder+namespace+"/";
+				cList = os.listdir(curDir);
+				for cName in cList:
+					curSubDir = curDir+cName+"/templates/";
+					if os.path.exists(curSubDir):
+						pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
-		namespacesList = os.listdir(componentsFolder2);
-		for namespace in namespacesList:
-			curDir = componentsFolder2+namespace+"/";
-			cList = os.listdir(curDir);
-			for cName in cList:
-				curSubDir = curDir+cName;
-				pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+		if os.path.exists(componentsFolder2):
+			namespacesList = os.listdir(componentsFolder2);
+			for namespace in namespacesList:
+				curDir = componentsFolder2+namespace+"/";
+				cList = os.listdir(curDir);
+				for cName in cList:
+					curSubDir = curDir+cName;
+					if os.path.exists(curSubDir):
+						pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
-		namespacesList = os.listdir(componentsFolder3);
-		for namespace in namespacesList:
-			curDir = componentsFolder3+namespace+"/";
-			cList = os.listdir(curDir);
-			for cName in cList:
-				curSubDir = curDir+cName;
-				pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+		if os.path.exists(componentsFolder3):
+			namespacesList = os.listdir(componentsFolder3);
+			for namespace in namespacesList:
+				curDir = componentsFolder3+namespace+"/";
+				cList = os.listdir(curDir);
+				for cName in cList:
+					curSubDir = curDir+cName;
+					if os.path.exists(curSubDir):
+						pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		return pathList;
 	def run(self): 
@@ -331,6 +337,13 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 
 		pathList = [];
 		pathList += map(lambda x: x, os.listdir(templateFolder));
+		componentPath = list(templateFolder.split('/'));
+		del componentPath[-1];
+		del componentPath[-1];
+		del componentPath[-1];
+		componentPath = '/'.join(componentPath)+'/component.php';
+		if os.path.exists(componentPath):
+			pathList += ['../../component.php'];
 
 		if "template.php" in pathList:
 			if "component_epilog.php" not in pathList:
@@ -341,7 +354,7 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 	def run(self): 
 		window = sublime.active_window();
 		# curFolder = window.folders()[0];
-		self.getPathList();
+		# self.getPathList();
 		window.show_quick_panel(self.getPathList(), self.on_chosen)
 	def on_chosen(self, index):
 		window = sublime.active_window();
@@ -355,6 +368,13 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		# 	return
 		el = self.getPathList()[index];
 		if "create:" not in el :
+			while '../' in el :
+				el = el[3:];
+				tmp = list(templateFolder.split('/'));
+				del tmp[-1];
+				del tmp[-1];
+				templateFolder = '/'.join(tmp)+'/';
+			# pprint(templateFolder+el);
 			window.open_file(templateFolder+el)
 		else:
 			el=el.split(":")[1];
