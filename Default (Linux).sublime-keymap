@@ -1,0 +1,23 @@
+[
+	// my plugins
+		{ "keys": ["ctrl+m","ctrl+c"], "command": "bitrix_get_component_path" },
+		{ "keys": ["ctrl+m","ctrl+t"], "command": "bitrix_get_component_template_path" },
+		{ "keys": ["ctrl+m","ctrl+n"], "command": "bitrix_new_component" },
+
+		{ "keys": ["ctrl+m","ctrl+a"], "command": "bitrix_ajax_open" },
+
+		{ "keys": ["ctrl+m","ctrl+o"], "command": "bitrix_php_open" },
+
+		{ "keys": ["ctrl+m","ctrl+h"], "command": "bitrix_open_header" },
+		{ "keys": ["ctrl+m","ctrl+f"], "command": "bitrix_open_footer" },
+		{ "keys": ["ctrl+m","ctrl+j"], "command": "bitrix_open_js" },
+		{ "keys": ["ctrl+m","ctrl+s"], "command": "bitrix_open_stylesheet" },
+		{ "keys": ["ctrl+m","ctrl+i"], "command": "bitrix_open_init" },
+
+		{ "keys": ["ctrl+m","ctrl+l"], "command": "bitrix_components_list" },
+		{ "keys": ["ctrl+m","ctrl+k"], "command": "bitrix_templates_list" },
+
+		{ "keys": ["ctrl+m","ctrl+m","ctrl+t"], "command": "bitrix_template_menu" },
+		{ "keys": ["ctrl+m","ctrl+m","ctrl+s"], "command": "bitrix_open_class" },
+		{ "keys": ["ctrl+m","ctrl+m","ctrl+c"], "command": "bitrix_component_menu" },
+]

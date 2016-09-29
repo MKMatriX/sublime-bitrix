@@ -393,6 +393,58 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 			el=el.split(":")[1];
 			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
 			window.open_file(templateFolder+el)
+class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
+	def getPathList(self):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		view = window.active_view();
+		file = view.file_name();
+		templateFolder = os.path.dirname(file)+"/templates/";
+		pathList = [];
+		if os.path.exists(templateFolder):
+			tmplList = os.listdir(templateFolder);
+			for template in tmplList:
+				curDir = templateFolder+template+"/";
+				fList = os.listdir(curDir);
+				pathList += map(lambda x: "templates/"+template+"/"+x, fList);
+
+		# if "template.php" in pathList:
+		# 	if "component_epilog.php" not in pathList:
+		# 		pathList += ["create:component_epilog.php"]
+		# 	if "result_modifier.php" not in pathList:
+		# 		pathList += ["create:result_modifier.php"]
+		return pathList;
+	def run(self): 
+		window = sublime.active_window();
+		# curFolder = window.folders()[0];
+		# self.getPathList();
+		window.show_quick_panel(self.getPathList(), self.on_chosen)
+	def on_chosen(self, index):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		view = window.active_view();
+		file = view.file_name();
+		curFolder = os.path.dirname(file)+"/";
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		el = self.getPathList()[index];
+		if "create:" not in el :
+			while '../' in el :
+				el = el[3:];
+				tmp = list(curFolder .split('/'));
+				del tmp[-1];
+				del tmp[-1];
+				curFolder = '/'.join(tmp)+'/';
+			# pprint(curFolder +el);
+			window.open_file(curFolder+el)
+		else:
+			el=el.split(":")[1];
+			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
+			window.open_file(templateFolder+el)
+
+
 
 class BitrixOpenClassCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
