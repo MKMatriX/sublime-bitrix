@@ -27,7 +27,7 @@ $ajaxError = function($error='-666') use($arErrors, $arPossibleErrors){
 	$thisError = $arPossibleErrors[(String)$error];
 	$thisError["CODE"] = $error;
 	$arErrors[] = $thisError;
-}
+};
 function no_errors() {
 	global $arErrors;
 	return count($arErrors) === 0;
