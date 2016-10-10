@@ -213,7 +213,34 @@ class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		item = self.getPathList()[index];
 		openFile(item);
+class BitrixPagesListCommand(sublime_plugin.WindowCommand):
+	def getPathList(self):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
 
+		pathList = [];
+		if os.path.exists(curFolder):
+			pathList += map(lambda x: x, os.listdir(curFolder));
+			pathList = list(filter(lambda x: '.' not in x, pathList)); # remove .git and ect
+			ignore = ['bitrix','upload','html','desktop_app'];
+			pathList = list(filter(lambda x: x not in ignore, pathList));
+
+			pathList = list(filter(lambda x: os.path.isfile(curFolder+"/"+x+"/index.php") , pathList));
+
+		return sorted(pathList);
+	def run(self): 
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		window.show_quick_panel(self.getPathList(), self.on_chosen)
+	def on_chosen(self, index):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		item = "/"+self.getPathList()[index]+"/index.php";
+		openFile(item);
 
 class BitrixPhpOpenCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
