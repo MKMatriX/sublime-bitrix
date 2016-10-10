@@ -185,6 +185,35 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 			item[0] = sw(item[0]);
 		path = curFolder+"/".join(item)+"/template.php";
 		window.open_file(path)
+class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
+	def getPathList(self):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		ajaxFolder = curFolder+"/ajax/";
+		ajaxFolder2 = curFolder+"/ajaxtools/";
+
+		pathList = [];
+		if os.path.exists(ajaxFolder):
+			pathList += map(lambda x: "/ajax/"+x, os.listdir(ajaxFolder));
+
+		if os.path.exists(ajaxFolder2):
+			pathList += map(lambda x: "/ajax/"+x, os.listdir(ajaxFolder2));
+
+		return pathList;
+	def run(self): 
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		window.show_quick_panel(self.getPathList(), self.on_chosen)
+	def on_chosen(self, index):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		item = self.getPathList()[index];
+		openFile(item);
+
 
 class BitrixPhpOpenCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -338,6 +367,7 @@ class BitrixOpenJsCommand(sublime_plugin.TextCommand):
 class BitrixOpenInitCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		openFile('/bitrix/php_interface/init.php');
+
 class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
@@ -443,8 +473,6 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 			el=el.split(":")[1];
 			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
 			window.open_file(templateFolder+el)
-
-
 
 class BitrixOpenClassCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
