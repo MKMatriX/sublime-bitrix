@@ -106,7 +106,9 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 		namespacesList = os.listdir(componentsFolder);
 		for namespace in namespacesList:
 			if (namespace == "bitrix"): pass
-			pathList += map(lambda x: namespace+":"+x, os.listdir(os.path.join(componentsFolder,namespace)));
+			curDir = os.path.join(componentsFolder,namespace);
+			if os.path.isdir(curDir):
+				pathList += map(lambda x: namespace+":"+x, os.listdir(curDir));
 		return pathList;
 	def run(self): 
 		window = sublime.active_window();
@@ -136,31 +138,34 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 			namespacesList = os.listdir(componentsFolder);
 			for namespace in namespacesList:
 				curDir = os.path.join(componentsFolder,namespace);
-				cList = os.listdir(curDir);
-				for cName in cList:
-					curSubDir = os.path.join(curDir,cName,"templates");
-					if os.path.exists(curSubDir):
-						pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
+				if os.path.isdir(curDir):
+					cList = os.listdir(curDir);
+					for cName in cList:
+						curSubDir = os.path.join(curDir,cName,"templates");
+						if os.path.exists(curSubDir):
+							pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		if os.path.exists(componentsFolder2):
 			namespacesList = os.listdir(componentsFolder2);
 			for namespace in namespacesList:
 				curDir = os.path.join(componentsFolder2,namespace);
-				cList = os.listdir(curDir);
-				for cName in cList:
-					curSubDir = os.path.join(curDir,cName);
-					if os.path.exists(curSubDir):
-						pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+				if os.path.isdir(curDir):
+					cList = os.listdir(curDir);
+					for cName in cList:
+						curSubDir = os.path.join(curDir,cName);
+						if os.path.exists(curSubDir):
+							pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		if os.path.exists(componentsFolder3):
 			namespacesList = os.listdir(componentsFolder3);
 			for namespace in namespacesList:
 				curDir = os.path.join(componentsFolder3,namespace);
-				cList = os.listdir(curDir);
-				for cName in cList:
-					curSubDir = os.path.join(curDir,cName);
-					if os.path.exists(curSubDir):
-						pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+				if os.path.isdir(curDir):
+					cList = os.listdir(curDir);
+					for cName in cList:
+						curSubDir = os.path.join(curDir,cName);
+						if os.path.exists(curSubDir):
+							pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		return pathList;
 	def run(self): 
