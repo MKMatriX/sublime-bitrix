@@ -96,16 +96,17 @@ def parseWord(self):
 		data = {"class": self.view.substr(selected)}
 		return data;
 
+#	lists
 class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
-		componentsFolder = curFolder+"/bitrix/components/";
+		componentsFolder = os.path.join(curFolder,"bitrix","components");
 		pathList = [];
 		namespacesList = os.listdir(componentsFolder);
 		for namespace in namespacesList:
 			if (namespace == "bitrix"): pass
-			pathList += map(lambda x: namespace+":"+x, os.listdir(componentsFolder+namespace+"/"));
+			pathList += map(lambda x: namespace+":"+x, os.listdir(os.path.join(componentsFolder,namespace)));
 		return pathList;
 	def run(self): 
 		window = sublime.active_window();
@@ -118,44 +119,46 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
-		path = curFolder+"/bitrix/components/"+self.getPathList()[index].replace(":","/")+"/component.php";
+		item = self.getPathList()[index].split(":");
+		tmp = os.path.join(*item);
+		path = os.path.join(curFolder,"bitrix","components",tmp,"component.php");
 		window.open_file(path)
 class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
-		componentsFolder = curFolder+"/bitrix/components/";
-		componentsFolder2 = curFolder+"/bitrix/templates/main/components/";
-		componentsFolder3 = curFolder+"/bitrix/templates/.default/components/";
+		componentsFolder = os.path.join(curFolder,"bitrix","components");
+		componentsFolder2 = os.path.join(curFolder,"bitrix","templates","main","components");
+		componentsFolder3 = os.path.join(curFolder,"bitrix","templates",".default","components");
 
 		pathList = [];
 		if os.path.exists(componentsFolder):
 			namespacesList = os.listdir(componentsFolder);
 			for namespace in namespacesList:
-				curDir = componentsFolder+namespace+"/";
+				curDir = os.path.join(componentsFolder,namespace);
 				cList = os.listdir(curDir);
 				for cName in cList:
-					curSubDir = curDir+cName+"/templates/";
+					curSubDir = os.path.join(curDir,cName,"templates");
 					if os.path.exists(curSubDir):
 						pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		if os.path.exists(componentsFolder2):
 			namespacesList = os.listdir(componentsFolder2);
 			for namespace in namespacesList:
-				curDir = componentsFolder2+namespace+"/";
+				curDir = os.path.join(componentsFolder2,namespace);
 				cList = os.listdir(curDir);
 				for cName in cList:
-					curSubDir = curDir+cName;
+					curSubDir = os.path.join(curDir,cName);
 					if os.path.exists(curSubDir):
 						pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
 		if os.path.exists(componentsFolder3):
 			namespacesList = os.listdir(componentsFolder3);
 			for namespace in namespacesList:
-				curDir = componentsFolder3+namespace+"/";
+				curDir = os.path.join(componentsFolder3,namespace);
 				cList = os.listdir(curDir);
 				for cName in cList:
-					curSubDir = curDir+cName;
+					curSubDir = os.path.join(curDir,cName);
 					if os.path.exists(curSubDir):
 						pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
 
@@ -174,30 +177,32 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		item = self.getPathList()[index].split(":");
 		def sw(x):
 			return {
-				'main': "/bitrix/templates/main/components",
-				'default' : "/bitrix/templates/.default/components",
-			}.get(x, "/bitrix/components")
+				'main': os.path.join("bitrix","templates","main","components"),
+				'default' : os.path.join("bitrix","templates",".default","components"),
+			}.get(x, os.path.join("bitrix","components"))
 		if len(item)==3:
 			item.append(item[2]);
 			item[2] = "templates";
 			item.insert(0,sw(item[0]));
 		else:
 			item[0] = sw(item[0]);
-		path = curFolder+"/".join(item)+"/template.php";
+		tmp = os.path.join(*item);
+		path = os.path.join(curFolder,tmp,"template.php");
+		# print(path);
 		window.open_file(path)
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
-		ajaxFolder = curFolder+"/ajax/";
-		ajaxFolder2 = curFolder+"/ajaxtools/";
+		ajaxFolder = os.path.join(curFolder,"ajax");
+		ajaxFolder2 = os.path.join(curFolder,"ajaxtools");
 
 		pathList = [];
 		if os.path.exists(ajaxFolder):
-			pathList += map(lambda x: "/ajax/"+x, os.listdir(ajaxFolder));
+			pathList += map(lambda x: os.path.join("ajax",x), os.listdir(ajaxFolder));
 
 		if os.path.exists(ajaxFolder2):
-			pathList += map(lambda x: "/ajax/"+x, os.listdir(ajaxFolder2));
+			pathList += map(lambda x: os.path.join("ajax",x), os.listdir(ajaxFolder2));
 
 		return pathList;
 	def run(self): 
@@ -225,7 +230,8 @@ class BitrixPagesListCommand(sublime_plugin.WindowCommand):
 			ignore = ['bitrix','upload','html','desktop_app'];
 			pathList = list(filter(lambda x: x not in ignore, pathList));
 
-			pathList = list(filter(lambda x: os.path.isfile(curFolder+"/"+x+"/index.php") , pathList));
+			pathList = list(filter(lambda x: os.path.isfile(
+				os.path.join(curFolder,x,"index.php")) , pathList));
 
 		return sorted(pathList);
 	def run(self): 
@@ -239,9 +245,10 @@ class BitrixPagesListCommand(sublime_plugin.WindowCommand):
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
-		item = "/"+self.getPathList()[index]+"/index.php";
+		item = os.path.join(self.getPathList()[index],"index.php");
 		openFile(item);
 
+#	in text open
 class BitrixPhpOpenCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		window = sublime.active_window()
@@ -252,7 +259,7 @@ class BitrixPhpOpenCommand(sublime_plugin.TextCommand):
 			print("TODO: absolute path by php")
 			# filePath = curFolder + data["file"]
 		else:
-			filePath = window.extract_variables()["file_path"] + "/" + data['file'];
+			filePath = os.path.join(window.extract_variables()["file_path"],data['file']);
 			window.open_file(filePath)
 		# print(filePath)
 class BitrixAjaxOpenCommand(sublime_plugin.TextCommand):
@@ -276,8 +283,8 @@ class BitrixGetComponentPathCommand(sublime_plugin.TextCommand):
 		curFolder = window.folders()[0]
 		data = parseInclude(self)
 
-		componentPath = curFolder + '/bitrix/components/'+data['namespace']+'/'+data['component']+"/"
-		componentFile = componentPath + "component.php";
+		componentPath = os.path.join(curFolder,'bitrix','components',data['namespace'],data['component']);
+		componentFile = os.path.join(componentPath,"component.php");
 		# print(componentFile)
 		window.open_file(componentFile)
 class BitrixGetComponentTemplatePathCommand(sublime_plugin.TextCommand):
@@ -286,13 +293,13 @@ class BitrixGetComponentTemplatePathCommand(sublime_plugin.TextCommand):
 		curFolder = window.folders()[0]
 		data = parseInclude(self)
 
-		componentPath = curFolder + '/bitrix/components/'+data['namespace']+'/'+data['component']+"/"
-				
-		templatePath = componentPath + "templates/"
-		templateFile = templatePath + data['template'] + "/template.php"
+		componentPath = os.path.join(curFolder,'bitrix','components',data['namespace'],data['component']);
+		templatePath = os.path.join(componentPath,"templates");
+		templateFile = os.path.join(templatePath,data['template'],"template.php");
 		# print(templateFile)
 		window.open_file(templateFile)
 
+# create new component
 class BitrixNewComponentCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		window = sublime.active_window()
@@ -357,6 +364,7 @@ class BitrixNewComponentCommand(sublime_plugin.TextCommand):
 			window.open_file(cC)
 			window.open_file(cT)
 
+# utils
 def createFileFromTemplate(filePath, templatePath, replaceArray):
 	folder = os.path.basename(filePath);
 	# if not os.path.exists(folder):
@@ -374,11 +382,14 @@ def createFileFromTemplate(filePath, templatePath, replaceArray):
 			with open(filePath, "w") as f1:
 				f1.writelines(lines)
 def openFile(path):
-	window = sublime.active_window()
-	curFolder = window.folders()[0]
-	path = curFolder + path
-	window.open_file(path)
+	window = sublime.active_window();
+	curFolder = window.folders()[0];
+	if path[0] == '/':
+		path = path[1:];
+	path = os.path.join(curFolder,path);
+	window.open_file(path);
 
+#	open const files
 class BitrixOpenHeaderCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		openFile('/bitrix/templates/main/header.php');
@@ -395,6 +406,7 @@ class BitrixOpenInitCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		openFile('/bitrix/php_interface/init.php');
 
+#	in component menu
 class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
@@ -501,6 +513,7 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
 			window.open_file(templateFolder+el)
 
+# already not needed
 class BitrixOpenClassCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		window = sublime.active_window()
