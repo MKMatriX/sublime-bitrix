@@ -207,7 +207,7 @@ class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 			pathList += map(lambda x: os.path.join("ajax",x), os.listdir(ajaxFolder));
 
 		if os.path.exists(ajaxFolder2):
-			pathList += map(lambda x: os.path.join("ajax",x), os.listdir(ajaxFolder2));
+			pathList += map(lambda x: os.path.join("ajaxtools",x), os.listdir(ajaxFolder2));
 
 		return pathList;
 	def run(self): 
