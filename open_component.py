@@ -134,6 +134,15 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		componentsFolder3 = os.path.join(curFolder,"bitrix","templates",".default","components");
 
 		pathList = [];
+
+		# remove all components w/o template.php
+		def filterComplex(curSubDir):
+			tmp = os.listdir(curSubDir);
+			if os.path.isdir(curSubDir):
+				tmp = filter(lambda x: os.path.isdir(os.path.join(curSubDir,x)), tmp);
+				tmp = filter(lambda x: os.path.isfile(os.path.join(curSubDir,x,"template.php")), tmp);
+			return tmp;
+
 		if os.path.exists(componentsFolder):
 			namespacesList = os.listdir(componentsFolder);
 			for namespace in namespacesList:
@@ -142,8 +151,8 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 					cList = os.listdir(curDir);
 					for cName in cList:
 						curSubDir = os.path.join(curDir,cName,"templates");
-						if os.path.exists(curSubDir):
-							pathList += map(lambda x: namespace+":"+cName+":"+x, os.listdir(curSubDir));
+						tmplList = filterComplex(curSubDir);
+						pathList += map(lambda x: namespace+":"+cName+":"+x, tmplList);
 
 		if os.path.exists(componentsFolder2):
 			namespacesList = os.listdir(componentsFolder2);
@@ -153,8 +162,8 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 					cList = os.listdir(curDir);
 					for cName in cList:
 						curSubDir = os.path.join(curDir,cName);
-						if os.path.exists(curSubDir):
-							pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+						tmplList = filterComplex(curSubDir);
+						pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, tmplList);
 
 		if os.path.exists(componentsFolder3):
 			namespacesList = os.listdir(componentsFolder3);
@@ -164,8 +173,8 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 					cList = os.listdir(curDir);
 					for cName in cList:
 						curSubDir = os.path.join(curDir,cName);
-						if os.path.exists(curSubDir):
-							pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, os.listdir(curSubDir));
+						tmplList = filterComplex(curSubDir);
+						pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, tmplList);
 
 		return pathList;
 	def run(self): 
