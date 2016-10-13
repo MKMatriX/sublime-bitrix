@@ -18,6 +18,7 @@
 		{ "keys": ["ctrl+m","ctrl+k"], "command": "bitrix_templates_list" },
 		{ "keys": ["ctrl+m","ctrl+."], "command": "bitrix_pages_list" },
 		{ "keys": ["ctrl+m","ctrl+,"], "command": "bitrix_ajax_list" },
+		{ "keys": ["ctrl+m","ctrl+;"], "command": "bitrix_html_list" },
 
 		{ "keys": ["ctrl+m","ctrl+m","ctrl+t"], "command": "bitrix_template_menu" },
 		{ "keys": ["ctrl+m","ctrl+m","ctrl+s"], "command": "bitrix_open_class" },

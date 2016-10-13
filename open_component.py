@@ -261,6 +261,34 @@ class BitrixPagesListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		item = os.path.join(self.getPathList()[index],"index.php");
 		openFile(item);
+class BitrixHtmlListCommand(sublime_plugin.WindowCommand):
+	def getPathList(self):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		html = os.path.join(curFolder, "html");
+
+		pathList = [];
+		if os.path.exists(html):
+			for root, dirs, files in os.walk(html, topdown=False):
+				relativeRoot = root.replace(html,'',1)[1:];
+				for name in files:
+					if re.match(".*\.php",name):
+						pathList += [os.path.join(relativeRoot,name)];
+
+		return sorted(pathList);
+	def run(self): 
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		window.show_quick_panel(self.getPathList(), self.on_chosen)
+	def on_chosen(self, index):
+		window = sublime.active_window();
+		curFolder = window.folders()[0];
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		item = os.path.join("html",self.getPathList()[index]);
+		openFile(item);
 
 #	in text open
 class BitrixPhpOpenCommand(sublime_plugin.TextCommand):
@@ -283,10 +311,9 @@ class BitrixAjaxOpenCommand(sublime_plugin.TextCommand):
 		data = parseAjax(self)
 
 		if data['url'][0] == "/":
-			filePath = curFolder + data['url'];
+			filePath = os.path.join(curFolder, data['url']);
 
 			createFileFromTemplate(filePath, 'ajax.php', '');
-
 			# print(filePath)
 			window.open_file(filePath)
 		else: 
@@ -427,37 +454,34 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
-		templateFolder = os.path.dirname(file)+"/";
-		if list(reversed(templateFolder.split('/')))[2] != "templates":
-			return
+		templateFolder = os.path.dirname(file);
+		print(os.path.basename(os.path.dirname(templateFolder)));
+		if os.path.basename(os.path.dirname(templateFolder)) != "templates":
+			return [];
 
 		pathList = [];
-		pathList += map(lambda x: x, os.listdir(templateFolder));
-		componentPath = list(templateFolder.split('/'));
-		del componentPath[-1];
-		del componentPath[-1];
-		del componentPath[-1];
-		componentPath = '/'.join(componentPath)+'/component.php';
+		pathList += filter(lambda x: x != os.path.basename(file), os.listdir(templateFolder));
+		componentPath = os.path.dirname(os.path.dirname(templateFolder));
+		componentPath = os.path.join(componentPath,'component.php');
+		print(componentPath);
 		if os.path.exists(componentPath):
 			pathList += ['../../component.php'];
 
-		if "template.php" in pathList:
-			if "component_epilog.php" not in pathList:
+		if "template.php" in os.listdir(templateFolder):
+			if "component_epilog.php" not in os.listdir(templateFolder):
 				pathList += ["create:component_epilog.php"]
-			if "result_modifier.php" not in pathList:
+			if "result_modifier.php" not in os.listdir(templateFolder):
 				pathList += ["create:result_modifier.php"]
 		return pathList;
 	def run(self): 
 		window = sublime.active_window();
-		# curFolder = window.folders()[0];
-		# self.getPathList();
 		window.show_quick_panel(self.getPathList(), self.on_chosen)
 	def on_chosen(self, index):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
-		templateFolder = os.path.dirname(file)+"/";
+		templateFolder = os.path.dirname(file);
 		if index == -1: return
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
@@ -466,36 +490,27 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		if "create:" not in el :
 			while '../' in el :
 				el = el[3:];
-				tmp = list(templateFolder.split('/'));
-				del tmp[-1];
-				del tmp[-1];
-				templateFolder = '/'.join(tmp)+'/';
-			# pprint(templateFolder+el);
-			window.open_file(templateFolder+el)
+				templateFolder = os.path.dirname(templateFolder);
+			window.open_file(os.path.join(templateFolder,el));
 		else:
 			el=el.split(":")[1];
-			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
-			window.open_file(templateFolder+el)
+			createFileFromTemplate(os.path.join(templateFolder,el), 't'+el[0].upper()+'.php', '');
+			window.open_file(os.path.join(templateFolder,el));
 class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
-		templateFolder = os.path.dirname(file)+"/templates/";
+		templateFolder = os.path.join(os.path.dirname(file),"templates");
 		pathList = [];
 		if os.path.exists(templateFolder):
 			tmplList = os.listdir(templateFolder);
 			for template in tmplList:
-				curDir = templateFolder+template+"/";
+				curDir = os.path.join(templateFolder,template);
 				fList = os.listdir(curDir);
 				pathList += map(lambda x: "templates/"+template+"/"+x, fList);
 
-		# if "template.php" in pathList:
-		# 	if "component_epilog.php" not in pathList:
-		# 		pathList += ["create:component_epilog.php"]
-		# 	if "result_modifier.php" not in pathList:
-		# 		pathList += ["create:result_modifier.php"]
 		return pathList;
 	def run(self): 
 		window = sublime.active_window();
@@ -507,7 +522,7 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
-		curFolder = os.path.dirname(file)+"/";
+		curFolder = os.path.dirname(file);
 		if index == -1: return
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
@@ -516,16 +531,13 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 		if "create:" not in el :
 			while '../' in el :
 				el = el[3:];
-				tmp = list(curFolder .split('/'));
-				del tmp[-1];
-				del tmp[-1];
-				curFolder = '/'.join(tmp)+'/';
+				templateFolder = os.path.dirname(templateFolder);
 			# pprint(curFolder +el);
-			window.open_file(curFolder+el)
+			window.open_file(os.path.join(curFolder,el));
 		else:
 			el=el.split(":")[1];
-			createFileFromTemplate(templateFolder+el, 't'+el[0].upper()+'.php', '');
-			window.open_file(templateFolder+el)
+			createFileFromTemplate(os.path.join(templateFolder,el), 't'+el[0].upper()+'.php', '');
+			window.open_file(os.path.join(templateFolder,el));
 
 # already not needed
 class BitrixOpenClassCommand(sublime_plugin.TextCommand):
