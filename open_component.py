@@ -455,12 +455,13 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		view = window.active_view();
 		file = view.file_name();
 		templateFolder = os.path.dirname(file);
-		print(os.path.basename(os.path.dirname(templateFolder)));
+		# print(os.path.basename(os.path.dirname(templateFolder)));
 		if os.path.basename(os.path.dirname(templateFolder)) != "templates":
 			return [];
 
 		pathList = [];
-		pathList += filter(lambda x: x != os.path.basename(file), os.listdir(templateFolder));
+		files = filter(lambda x: x == os.path.isfile(os.path.join(templateFolder,x)), os.listdir(templateFolder));
+		pathList += filter(lambda x: x != os.path.basename(file), files);
 		componentPath = os.path.dirname(os.path.dirname(templateFolder));
 		componentPath = os.path.join(componentPath,'component.php');
 		print(componentPath);
@@ -508,7 +509,7 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 			tmplList = os.listdir(templateFolder);
 			for template in tmplList:
 				curDir = os.path.join(templateFolder,template);
-				fList = os.listdir(curDir);
+				fList = filter(lambda x: x == os.path.isfile(os.path.join(curDir,x)), os.listdir(curDir));
 				pathList += map(lambda x: "templates/"+template+"/"+x, fList);
 
 		return pathList;
