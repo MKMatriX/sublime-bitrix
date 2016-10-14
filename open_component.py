@@ -509,9 +509,8 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 			tmplList = os.listdir(templateFolder);
 			for template in tmplList:
 				curDir = os.path.join(templateFolder,template);
-				fList = filter(lambda x: x == os.path.isfile(os.path.join(curDir,x)), os.listdir(curDir));
+				fList = filter(lambda x: os.path.isfile(os.path.join(curDir,x)), os.listdir(curDir));
 				pathList += map(lambda x: "templates/"+template+"/"+x, fList);
-
 		return pathList;
 	def run(self): 
 		window = sublime.active_window();
