@@ -460,13 +460,13 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 			return [];
 
 		pathList = [];
-		files = filter(lambda x: x == os.path.isfile(os.path.join(templateFolder,x)), os.listdir(templateFolder));
+		files = filter(lambda x: os.path.isfile(os.path.join(templateFolder,x)), os.listdir(templateFolder));
 		pathList += filter(lambda x: x != os.path.basename(file), files);
+		pprint(pathList);
 		componentPath = os.path.dirname(os.path.dirname(templateFolder));
-		componentPath = os.path.join(componentPath,'component.php');
-		print(componentPath);
 		if os.path.exists(componentPath):
-			pathList += ['../../component.php'];
+			componentFiles = filter(lambda x: os.path.isfile(os.path.join(componentPath,x)), os.listdir(componentPath));
+			pathList += map(lambda x: '../../'+x, componentFiles);
 
 		if "template.php" in os.listdir(templateFolder):
 			if "component_epilog.php" not in os.listdir(templateFolder):
