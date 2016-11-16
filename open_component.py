@@ -503,8 +503,10 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
-		templateFolder = os.path.join(os.path.dirname(file),"templates");
+		componentFolder = os.path.dirname(file);
+		templateFolder = os.path.join(componentFolder,"templates");
 		pathList = [];
+		pathList += filter(lambda x: os.path.isfile(os.path.join(componentFolder,x)), os.listdir(componentFolder));
 		if os.path.exists(templateFolder):
 			tmplList = os.listdir(templateFolder);
 			for template in tmplList:
@@ -522,6 +524,8 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 		curFolder = window.folders()[0];
 		view = window.active_view();
 		file = view.file_name();
+		componentFolder = os.path.dirname(file);
+		templateFolder = os.path.join(componentFolder,"templates");
 		curFolder = os.path.dirname(file);
 		if index == -1: return
 		# if not isView(self.vid):
