@@ -15,19 +15,16 @@ def pathsToPaths(ar):
 			nextpaths = [];
 			for opath in paths:
 				path = opath["path"]
-				if ("$" in folder):
+				if ("$" == folder[0]):
+					propname = folder[1:]
 					if os.path.isdir(path):
-						folder = folder[1:]
-						temp = []
 						for subpath in os.listdir(path):
 							osubpath = opath.copy()
-							osubpath[folder] = subpath
+							osubpath[propname] = subpath
 							osubpath["path"] = os.path.join(path, subpath)
-							temp.append(osubpath)
-						paths.pop()
-						nextpaths += temp
+							nextpaths.append(osubpath)
 					else:
-						# print("not a folder " . path);
+						print("not a folder " + path);
 						pass
 				else:
 					opath["path"] = os.path.join(path, folder)
@@ -38,13 +35,20 @@ def pathsToPaths(ar):
 	for sar in ar:
 		paths += arrayToPath(sar)
 	# pprint(paths)
+	paths = filter(lambda x: os.path.isfile(x["path"]), paths);
 	return paths
 
-rootFolder =  [sublime.active_window().folders()[0]]; #root folder
-compenentsPaths = [["bitrix","components","$namespace", "$component", "component.php"]];
-templatesPaths = [["bitrix","components","$namespace", "$component", "templates", "$template", "template.php"]];
+rootFolder =  [os.path.join(sublime.active_window().folders()[0], "bitrix")]; #root folder
+compenentsPaths = [["components","$namespace", "$component", "component.php"]];
+templatesPaths = [
+	["templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
+	["components","$namespace", "$component", "templates", "$template", "template.php"]
+];
 
 compenentsList = pathsToPaths(compenentsPaths);
+templatesList = pathsToPaths(templatesPaths);
+
+# pprint(templatesList)
 
 def parseInclude(self):
 	for region in self.view.sel():
@@ -142,8 +146,7 @@ def parseWord(self):
 class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
 		compenentsList = pathsToPaths(compenentsPaths);
-		panelList = []
-		panelList[:] = [c["namespace"]+":"+c["component"] for c in compenentsList]
+		panelList = [c["namespace"]+":"+c["component"] for c in compenentsList]
 		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
 		if index == -1: return
@@ -151,86 +154,23 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
 		window.open_file(compenentsList[index]["path"])
-
 class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
-	def getPathList(self):
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
-		componentsFolder = os.path.join(curFolder,"bitrix","components");
-		componentsFolder2 = os.path.join(curFolder,"bitrix","templates","main","components");
-		componentsFolder3 = os.path.join(curFolder,"bitrix","templates",".default","components");
-
-		pathList = [];
-
-		# remove all components w/o template.php
-		def filterComplex(curSubDir):
-			tmp = os.listdir(curSubDir);
-			if os.path.isdir(curSubDir):
-				tmp = filter(lambda x: os.path.isdir(os.path.join(curSubDir,x)), tmp);
-				tmp = filter(lambda x: os.path.isfile(os.path.join(curSubDir,x,"template.php")), tmp);
-			return tmp;
-
-		if os.path.exists(componentsFolder):
-			namespacesList = os.listdir(componentsFolder);
-			for namespace in namespacesList:
-				curDir = os.path.join(componentsFolder,namespace);
-				if os.path.isdir(curDir):
-					cList = os.listdir(curDir);
-					for cName in cList:
-						curSubDir = os.path.join(curDir,cName,"templates");
-						tmplList = filterComplex(curSubDir);
-						pathList += map(lambda x: namespace+":"+cName+":"+x, tmplList);
-
-		if os.path.exists(componentsFolder2):
-			namespacesList = os.listdir(componentsFolder2);
-			for namespace in namespacesList:
-				curDir = os.path.join(componentsFolder2,namespace);
-				if os.path.isdir(curDir):
-					cList = os.listdir(curDir);
-					for cName in cList:
-						curSubDir = os.path.join(curDir,cName);
-						tmplList = filterComplex(curSubDir);
-						pathList += map(lambda x: "main:"+namespace+":"+cName+":"+x, tmplList);
-
-		if os.path.exists(componentsFolder3):
-			namespacesList = os.listdir(componentsFolder3);
-			for namespace in namespacesList:
-				curDir = os.path.join(componentsFolder3,namespace);
-				if os.path.isdir(curDir):
-					cList = os.listdir(curDir);
-					for cName in cList:
-						curSubDir = os.path.join(curDir,cName);
-						tmplList = filterComplex(curSubDir);
-						pathList += map(lambda x: "default:"+namespace+":"+cName+":"+x, tmplList);
-
-		return pathList;
 	def run(self): 
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
-		window.show_quick_panel(self.getPathList(), self.on_chosen)
+		templatesList = pathsToPaths(templatesPaths);
+		panelList = []
+		for t in templatesList:
+			if "siteTemplate" in t.keys():
+				niceName = t["siteTemplate"]+"/"+t["namespace"]+":"+t["component"]+":"+t["template"]
+			else:
+				niceName = t["namespace"]+":"+t["component"]+":"+t["template"]
+			panelList.append(niceName)
+		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
 		if index == -1: return
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
-		item = self.getPathList()[index].split(":");
-		def sw(x):
-			return {
-				'main': os.path.join("bitrix","templates","main","components"),
-				'default' : os.path.join("bitrix","templates",".default","components"),
-			}.get(x, os.path.join("bitrix","components"))
-		if len(item)==3:
-			item.append(item[2]);
-			item[2] = "templates";
-			item.insert(0,sw(item[0]));
-		else:
-			item[0] = sw(item[0]);
-		tmp = os.path.join(*item);
-		path = os.path.join(curFolder,tmp,"template.php");
-		# print(path);
-		window.open_file(path)
+		window.open_file(templatesList[index]["path"])
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
