@@ -35,18 +35,23 @@ def pathsToPaths(ar):
 	for sar in ar:
 		paths += arrayToPath(sar)
 	# pprint(paths)
-	paths = filter(lambda x: os.path.isfile(x["path"]), paths);
+	# paths = filter(lambda x: os.path.isfile(x["path"]), paths);
 	return paths
 
-rootFolder =  [os.path.join(sublime.active_window().folders()[0], "bitrix")]; #root folder
-compenentsPaths = [["components","$namespace", "$component", "component.php"]];
+rootFolder =  [sublime.active_window().folders()[0]]; #root folder
+compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
 templatesPaths = [
-	["templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
-	["components","$namespace", "$component", "templates", "$template", "template.php"]
+	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
+	["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"]
 ];
+ajaxPaths = [
+	["ajax", "$name"],
+	["ajaxtools", "$name"]
+]
 
 compenentsList = pathsToPaths(compenentsPaths);
 templatesList = pathsToPaths(templatesPaths);
+ajaxList = pathsToPaths(ajaxPaths);
 
 # pprint(templatesList)
 
@@ -172,33 +177,17 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		window.open_file(templatesList[index]["path"])
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
-	def getPathList(self):
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
-		ajaxFolder = os.path.join(curFolder,"ajax");
-		ajaxFolder2 = os.path.join(curFolder,"ajaxtools");
-
-		pathList = [];
-		if os.path.exists(ajaxFolder):
-			pathList += map(lambda x: os.path.join("ajax",x), os.listdir(ajaxFolder));
-
-		if os.path.exists(ajaxFolder2):
-			pathList += map(lambda x: os.path.join("ajaxtools",x), os.listdir(ajaxFolder2));
-
-		return pathList;
 	def run(self): 
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
-		window.show_quick_panel(self.getPathList(), self.on_chosen)
+		ajaxList = pathsToPaths(ajaxPaths);
+		panelList = [c["name"] for c in ajaxList]
+		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
-		window = sublime.active_window();
-		curFolder = window.folders()[0];
 		if index == -1: return
-		# if not isView(self.vid):
-		# 	sublime.status_message('You are in a different view.')
-		# 	return
-		item = self.getPathList()[index];
-		openFile(item);
+		if not isView(self.vid):
+			sublime.status_message('You are in a different view.')
+			return
+		# pprint(ajaxList)
+		window.open_file(ajaxList[index]["path"])
 class BitrixPagesListCommand(sublime_plugin.WindowCommand):
 	def getPathList(self):
 		window = sublime.active_window();
