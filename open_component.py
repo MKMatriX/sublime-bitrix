@@ -6,31 +6,6 @@ from pprint import pprint
 
 window = sublime.active_window()
 def pathsToPaths(ar):
-	def arrayToPath(ar):
-		paths = []
-		for root in rootFolder:
-			paths.append({"path": root})
-		opath = paths[0];
-		for folder in ar:
-			nextpaths = [];
-			for opath in paths:
-				path = opath["path"]
-				if ("$" == folder[0]):
-					propname = folder[1:]
-					if os.path.isdir(path):
-						for subpath in os.listdir(path):
-							osubpath = opath.copy()
-							osubpath[propname] = subpath
-							osubpath["path"] = os.path.join(path, subpath)
-							nextpaths.append(osubpath)
-					else:
-						print("not a folder " + path);
-						pass
-				else:
-					opath["path"] = os.path.join(path, folder)
-					nextpaths.append(opath)
-			paths = nextpaths
-		return paths;
 	paths = []
 	for sar in ar:
 		paths += arrayToPath(sar)
@@ -38,22 +13,49 @@ def pathsToPaths(ar):
 	# paths = filter(lambda x: os.path.isfile(x["path"]), paths);
 	return paths
 
+def arrayToPath(ar):
+	paths = []
+	for root in rootFolder:
+		paths.append({"path": root})
+	opath = paths[0];
+	for folder in ar:
+		nextpaths = [];
+		for opath in paths:
+			path = opath["path"]
+			if ("$" == folder[0]):
+				propname = folder[1:]
+				if os.path.isdir(path):
+					for subpath in os.listdir(path):
+						osubpath = opath.copy()
+						osubpath[propname] = subpath
+						osubpath["path"] = os.path.join(path, subpath)
+						nextpaths.append(osubpath)
+				else:
+					print("not a folder " + path);
+					pass
+			else:
+				opath["path"] = os.path.join(path, folder)
+				nextpaths.append(opath)
+		paths = nextpaths
+	return paths;
+
 rootFolder =  [sublime.active_window().folders()[0]]; #root folder
 compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
 templatesPaths = [
 	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
 	["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"]
 ];
-ajaxPaths = [
-	["ajax", "$name"],
-	["ajaxtools", "$name"]
-]
+complexTemplatesPaths = [
+	["bitrix", "components","$namespace", "$component", "templates", "$template", "$name"],
+	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
+];
+ajaxPaths = [["ajax", "$name"], ["ajaxtools", "$name"]]
 
+#initial (can be skipped, or left the only one)
 compenentsList = pathsToPaths(compenentsPaths);
 templatesList = pathsToPaths(templatesPaths);
 ajaxList = pathsToPaths(ajaxPaths);
-
-# pprint(templatesList)
+complexTemplatesList = [];
 
 def parseInclude(self):
 	for region in self.view.sel():
@@ -176,6 +178,30 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
 		window.open_file(templatesList[index]["path"])
+class BitrixComplexTemplatesListCommand(sublime_plugin.WindowCommand):
+	def run(self): 
+		nonCompex = [t["component"] for t in templatesList if os.path.isfile(t["path"])]
+		complexTemplatesList = pathsToPaths(complexTemplatesPaths);
+		complexTemplatesList = [c for c in complexTemplatesList if c["component"] not in nonCompex]
+		panelList = []
+		for t in complexTemplatesList:
+			if "siteTemplate" in t.keys():
+				niceName = t["siteTemplate"]+"/"+t["namespace"]+":"
+			else:
+				niceName = t["namespace"]+":"
+			if t["template"] == ".default":
+				niceName += t["component"]
+			else:
+				niceName += t["component"]+":"+t["template"]
+			niceName += " - " + t["name"]
+			panelList.append(niceName)
+		window.show_quick_panel(panelList, self.on_chosen)
+	def on_chosen(self, index):
+		if index == -1: return
+		# if not isView(self.vid):
+		# 	sublime.status_message('You are in a different view.')
+		# 	return
+		window.open_file(complexTemplatesList[index]["path"])
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
 		ajaxList = pathsToPaths(ajaxPaths);
