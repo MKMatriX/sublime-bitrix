@@ -2,10 +2,34 @@ import sublime, sublime_plugin, re
 import os
 import string
 
-from pprint import pprint
+# from pprint import pprint
 
-window = sublime.active_window()
+
+def initial():
+	# rootFolder = [sublime.active_window().folders()[0]]; #root folder
+	global rootFolder, compenentsPaths, templatesPaths, complexTemplatesPaths, ajaxPaths, compenentsList, templatesList, ajaxList, complexTemplatesList, window;
+
+	window = sublime.active_window()
+	rootFolder = sublime.active_window().folders(); #root folder
+	compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
+	templatesPaths = [
+		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
+		["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"]
+	];
+	complexTemplatesPaths = [
+		["bitrix", "components","$namespace", "$component", "templates", "$template", "$name"],
+		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
+	];
+	ajaxPaths = [["ajax", "$name"], ["ajaxtools", "$name"]]
+
+	#initial (can be skipped, or left the only one)
+	# compenentsList = [];
+	# templatesList = [];
+	# ajaxList = [];
+	# complexTemplatesList = [];
+
 def pathsToPaths(ar):
+	initial()
 	paths = []
 	for sar in ar:
 		paths += arrayToPath(sar)
@@ -15,6 +39,7 @@ def pathsToPaths(ar):
 
 def arrayToPath(ar):
 	paths = []
+	rootFolder = [sublime.active_window().folders()[0]]; #root folder
 	for root in rootFolder:
 		paths.append({"path": root})
 	opath = paths[0];
@@ -39,7 +64,7 @@ def arrayToPath(ar):
 		paths = nextpaths
 	return paths;
 
-rootFolder =  [sublime.active_window().folders()[0]]; #root folder
+rootFolder = sublime.active_window().folders(); #root folder
 compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
 templatesPaths = [
 	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
@@ -52,10 +77,16 @@ complexTemplatesPaths = [
 ajaxPaths = [["ajax", "$name"], ["ajaxtools", "$name"]]
 
 #initial (can be skipped, or left the only one)
-compenentsList = pathsToPaths(compenentsPaths);
-templatesList = pathsToPaths(templatesPaths);
-ajaxList = pathsToPaths(ajaxPaths);
+# compenentsList = pathsToPaths(compenentsPaths);
+# templatesList = pathsToPaths(templatesPaths);
+# ajaxList = pathsToPaths(ajaxPaths);
+# complexTemplatesList = [];
+
+compenentsList = [];
+templatesList = [];
+ajaxList = [];
 complexTemplatesList = [];
+
 
 def parseInclude(self):
 	for region in self.view.sel():
@@ -152,8 +183,10 @@ def parseWord(self):
 #	lists
 class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
+		global compenentsList;
 		compenentsList = pathsToPaths(compenentsPaths);
-		panelList = [c["namespace"]+":"+c["component"] for c in compenentsList]
+		panelList = []
+		panelList[:] = [c["namespace"]+":"+c["component"] for c in compenentsList]
 		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
 		if index == -1: return
@@ -162,8 +195,10 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		window.open_file(compenentsList[index]["path"])
 class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
-	def run(self): 
+	def run(self):
+		global templatesList;
 		templatesList = pathsToPaths(templatesPaths);
+		# pprint(templatesList)
 		panelList = []
 		for t in templatesList:
 			if "siteTemplate" in t.keys():
@@ -177,12 +212,14 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		# if not isView(self.vid):
 		# 	sublime.status_message('You are in a different view.')
 		# 	return
+		# pprint(templatesList)
 		window.open_file(templatesList[index]["path"])
 class BitrixComplexTemplatesListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
-		nonCompex = [t["component"] for t in templatesList if os.path.isfile(t["path"])]
-		complexTemplatesList = pathsToPaths(complexTemplatesPaths);
-		complexTemplatesList = [c for c in complexTemplatesList if c["component"] not in nonCompex]
+		global complexTemplatesList, templatesList;
+		nonCompex = [];
+		nonCompex[:] = [t["component"] for t in templatesList if os.path.isfile(t["path"])]
+		complexTemplatesList[:] = [c for c in pathsToPaths(complexTemplatesPaths) if c["component"] not in nonCompex]
 		panelList = []
 		for t in complexTemplatesList:
 			if "siteTemplate" in t.keys():
@@ -204,8 +241,9 @@ class BitrixComplexTemplatesListCommand(sublime_plugin.WindowCommand):
 		window.open_file(complexTemplatesList[index]["path"])
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
 	def run(self): 
+		global ajaxList;
 		ajaxList = pathsToPaths(ajaxPaths);
-		panelList = [c["name"] for c in ajaxList]
+		panelList[:] = [c["name"] for c in ajaxList]
 		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
 		if index == -1: return
@@ -444,7 +482,7 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		pathList = [];
 		files = filter(lambda x: os.path.isfile(os.path.join(templateFolder,x)), os.listdir(templateFolder));
 		pathList += filter(lambda x: x != os.path.basename(file), files);
-		pprint(pathList);
+		# pprint(pathList);
 		componentPath = os.path.dirname(os.path.dirname(templateFolder));
 		if os.path.exists(componentPath):
 			componentFiles = filter(lambda x: os.path.isfile(os.path.join(componentPath,x)), os.listdir(componentPath));
