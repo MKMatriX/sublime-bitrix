@@ -2,25 +2,44 @@ import sublime, sublime_plugin, re
 import os
 import string
 
-# from pprint import pprint
+from pprint import pprint
 
 
 def initial():
 	# rootFolder = [sublime.active_window().folders()[0]]; #root folder
-	global rootFolder, compenentsPaths, templatesPaths, complexTemplatesPaths, ajaxPaths, compenentsList, templatesList, ajaxList, complexTemplatesList, window;
+	global rootFolder
+	global compenentsPaths
+	global templatesPaths
+	global complexTemplatesPaths
+	global ajaxPaths
+	global compenentsList
+	global templatesList
+	global ajaxList
+	global complexTemplatesList
+	global window
 
 	window = sublime.active_window()
 	rootFolder = sublime.active_window().folders(); #root folder
-	compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
+	compenentsPaths = [
+		["bitrix", "components","$namespace", "$component", "component.php"],
+		["local", "components","$namespace", "$component", "component.php"]
+	];
 	templatesPaths = [
 		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
-		["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"]
+		["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"],
+		["local", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
+		["local", "components","$namespace", "$component", "templates", "$template", "template.php"]
 	];
 	complexTemplatesPaths = [
 		["bitrix", "components","$namespace", "$component", "templates", "$template", "$name"],
-		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
+		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"],
+		["local", "components","$namespace", "$component", "templates", "$template", "$name"],
+		["local", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
 	];
-	ajaxPaths = [["ajax", "$name"], ["ajaxtools", "$name"]]
+	ajaxPaths = [
+		["ajax", "$name"],
+		["ajaxtools", "$name"]
+	]
 
 	#initial (can be skipped, or left the only one)
 	# compenentsList = [];
@@ -39,7 +58,8 @@ def pathsToPaths(ar):
 
 def arrayToPath(ar):
 	paths = []
-	rootFolder = [sublime.active_window().folders()[0]]; #root folder
+	rootFolder = sublime.active_window().folders(); #root folder
+
 	for root in rootFolder:
 		paths.append({"path": root})
 	opath = paths[0];
@@ -47,7 +67,19 @@ def arrayToPath(ar):
 		nextpaths = [];
 		for opath in paths:
 			path = opath["path"]
-			if ("$" == folder[0]):
+			if ("$|" == folder[:2]):
+				split = folder.split('|')
+				propname = split[1]
+				pathVariants = split[2:]
+				for subpath in pathVariants:
+					osubpath = opath.copy()
+					osubpath[propname] = subpath
+					osubpath["path"] = os.path.join(path, subpath)
+					nextpaths.append(osubpath)
+				else:
+					print("not a folder " + path);
+					pass
+			elif ("$" == folder[0]):
 				propname = folder[1:]
 				if os.path.isdir(path):
 					for subpath in os.listdir(path):
@@ -65,14 +97,21 @@ def arrayToPath(ar):
 	return paths;
 
 rootFolder = sublime.active_window().folders(); #root folder
-compenentsPaths = [["bitrix", "components","$namespace", "$component", "component.php"]];
+compenentsPaths = [
+	["bitrix", "components","$namespace", "$component", "component.php"],
+	["local", "components","$namespace", "$component", "component.php"]
+];
 templatesPaths = [
 	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
-	["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"]
+	["bitrix", "components","$namespace", "$component", "templates", "$template", "template.php"],
+	["local", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
+	["local", "components","$namespace", "$component", "templates", "$template", "template.php"]
 ];
 complexTemplatesPaths = [
 	["bitrix", "components","$namespace", "$component", "templates", "$template", "$name"],
-	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
+	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"],
+	["local", "components","$namespace", "$component", "templates", "$template", "$name"],
+	["local", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "$name"]
 ];
 ajaxPaths = [["ajax", "$name"], ["ajaxtools", "$name"]]
 
@@ -125,7 +164,7 @@ def parseAjax(self):
 		lineContents = self.view.substr(line)
 
 		# one line only
-		while not re.match('.*\$\.ajax[\s]*\([\s]*{.*',lineContents): 
+		while not re.match('.*\$\.ajax[\s]*\([\s]*{.*',lineContents):
 			region = sublime.Region(line.a-1,line.a-1)
 			line = self.view.line(region)
 			lineContents = self.view.substr(line)
@@ -152,7 +191,7 @@ def parsePhpInclude(self):
 		lineContents = self.view.substr(line)
 
 		# one line only
-		while not re.match('.*(require|include).*',lineContents): 
+		while not re.match('.*(require|include).*',lineContents):
 			region = sublime.Region(line.a-1,line.a-1)
 			line = self.view.line(region)
 			lineContents = self.view.substr(line)
@@ -182,7 +221,7 @@ def parseWord(self):
 
 #	lists
 class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
-	def run(self): 
+	def run(self):
 		global compenentsList;
 		compenentsList = pathsToPaths(compenentsPaths);
 		panelList = []
@@ -215,7 +254,7 @@ class BitrixTemplatesListCommand(sublime_plugin.WindowCommand):
 		# pprint(templatesList)
 		window.open_file(templatesList[index]["path"])
 class BitrixComplexTemplatesListCommand(sublime_plugin.WindowCommand):
-	def run(self): 
+	def run(self):
 		global complexTemplatesList, templatesList;
 		nonCompex = [];
 		nonCompex[:] = [t["component"] for t in templatesList if os.path.isfile(t["path"])]
@@ -240,7 +279,7 @@ class BitrixComplexTemplatesListCommand(sublime_plugin.WindowCommand):
 		# 	return
 		window.open_file(complexTemplatesList[index]["path"])
 class BitrixAjaxListCommand(sublime_plugin.WindowCommand):
-	def run(self): 
+	def run(self):
 		global ajaxList;
 		ajaxList = pathsToPaths(ajaxPaths);
 		panelList[:] = [c["name"] for c in ajaxList]
@@ -268,7 +307,7 @@ class BitrixPagesListCommand(sublime_plugin.WindowCommand):
 				os.path.join(curFolder,x,"index.php")) , pathList));
 
 		return sorted(pathList);
-	def run(self): 
+	def run(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
 		window.show_quick_panel(self.getPathList(), self.on_chosen)
@@ -296,7 +335,7 @@ class BitrixHtmlListCommand(sublime_plugin.WindowCommand):
 						pathList += [os.path.join(relativeRoot,name)];
 
 		return sorted(pathList);
-	def run(self): 
+	def run(self):
 		window = sublime.active_window();
 		curFolder = window.folders()[0];
 		window.show_quick_panel(self.getPathList(), self.on_chosen)
@@ -336,7 +375,7 @@ class BitrixAjaxOpenCommand(sublime_plugin.TextCommand):
 			createFileFromTemplate(filePath, 'ajax.php', '');
 			# print(filePath)
 			window.open_file(filePath)
-		else: 
+		else:
 			print("Not looking as part of site: " + data['url'])
 class BitrixGetComponentPathCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -367,7 +406,7 @@ class BitrixNewComponentCommand(sublime_plugin.TextCommand):
 		curFolder = window.folders()[0]
 		data = parseInclude(self)
 
-		componentPath = curFolder + '/bitrix/components/'+data['namespace']+'/'+data['component']+"/"
+		componentPath = curFolder + '/local/components/'+data['namespace']+'/'+data['component']+"/"
 		templatePath = componentPath + "templates/" + data['template'] + '/'
 
 		# works only if no such folders
@@ -376,7 +415,7 @@ class BitrixNewComponentCommand(sublime_plugin.TextCommand):
 			os.makedirs(templatePath)
 
 			# path relative to site dir
-			cC = componentPath + "component.php"
+			cC = componentPath + "class.php"
 			cP = componentPath + ".parameters.php"
 			cD = componentPath + ".description.php"
 			cT = templatePath  + "template.php"
@@ -442,6 +481,8 @@ def createFileFromTemplate(filePath, templatePath, replaceArray):
 			lines = f.readlines()
 			with open(filePath, "w") as f1:
 				f1.writelines(lines)
+
+
 def openFile(path):
 	window = sublime.active_window();
 	curFolder = window.folders()[0];
@@ -450,22 +491,65 @@ def openFile(path):
 	path = os.path.join(curFolder,path);
 	window.open_file(path);
 
+
+
+def BitrixOpenFileFromSelectedList(index):
+	if index == -1: return
+	window.open_file(selectedList[index]["path"])
+
 #	open const files
 class BitrixOpenHeaderCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		openFile('/bitrix/templates/main/header.php');
+		global selectedList;
+		selectedList = pathsToPaths([
+			["$|folder|bitrix|local", "templates","$template", "header.php"],
+		])
+		panelList = [c["folder"]+" : "+c["template"] for c in selectedList]
+		window.show_quick_panel(panelList, BitrixOpenFileFromSelectedList)
 class BitrixOpenFooterCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		openFile('/bitrix/templates/main/footer.php');
+		global selectedList;
+		selectedList = pathsToPaths([
+			["$|folder|bitrix|local", "templates","$template", "footer.php"],
+		])
+		panelList = [c["folder"]+" : "+c["template"] for c in selectedList]
+		window.show_quick_panel(panelList, BitrixOpenFileFromSelectedList)
 class BitrixOpenStylesheetCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		openFile('/bitrix/templates/main/template_styles.css');
+		global selectedList;
+		selectedList = pathsToPaths([
+			["$|folder|bitrix|local", "templates","$template", "template_styles.css"],
+			["$|folder|bitrix|local", "templates","$template", "css", "$|file|custom.css|style.css"],
+		])
+		selectedList = [c for c in selectedList if os.path.exists(c["path"])]
+		panelList = []
+		for c in selectedList:
+			if 'file' in c:
+				panelList.append(c["folder"]+" : "+c["template"]+"/css/"+c['file'])
+			else:
+				panelList.append(c["folder"]+" : "+c["template"]+"/template_styles.css")
+		window.show_quick_panel(panelList, BitrixOpenFileFromSelectedList)
 class BitrixOpenJsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		openFile('/bitrix/templates/main/js/main.js');
+		global selectedList;
+		selectedList = pathsToPaths([
+			["$|folder|bitrix|local", "templates","$template", "js", "$|file|main.js|ajax.js|custom.js"],
+		])
+		selectedList = [c for c in selectedList if os.path.exists(c["path"])]
+		panelList = [c["folder"]+" : "+c["template"]+"/js/"+c["file"] for c in selectedList]
+		window.show_quick_panel(panelList, BitrixOpenFileFromSelectedList)
 class BitrixOpenInitCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		openFile('/bitrix/php_interface/init.php');
+		global selectedList;
+		selectedList = pathsToPaths([
+			["$|folder|bitrix|local", "php_interface", "init.php"],
+		])
+		selectedList = [c for c in selectedList if os.path.exists(c["path"])]
+		panelList = [c["folder"] for c in selectedList]
+		if len(selectedList) == 1:
+			openFile(selectedList[0]["path"])
+		else:
+			window.show_quick_panel(panelList, BitrixOpenFileFromSelectedList)
 
 #	in component menu
 class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
@@ -476,17 +560,16 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 		file = view.file_name();
 		templateFolder = os.path.dirname(file);
 		# print(os.path.basename(os.path.dirname(templateFolder)));
-		if os.path.basename(os.path.dirname(templateFolder)) != "templates":
-			return [];
 
 		pathList = [];
 		files = filter(lambda x: os.path.isfile(os.path.join(templateFolder,x)), os.listdir(templateFolder));
 		pathList += filter(lambda x: x != os.path.basename(file), files);
 		# pprint(pathList);
-		componentPath = os.path.dirname(os.path.dirname(templateFolder));
-		if os.path.exists(componentPath):
-			componentFiles = filter(lambda x: os.path.isfile(os.path.join(componentPath,x)), os.listdir(componentPath));
-			pathList += map(lambda x: '../../'+x, componentFiles);
+		if os.path.basename(os.path.dirname(templateFolder)) == "templates":
+			componentPath = os.path.dirname(os.path.dirname(templateFolder));
+			if os.path.exists(componentPath):
+				componentFiles = filter(lambda x: os.path.isfile(os.path.join(componentPath,x)), os.listdir(componentPath));
+				pathList += map(lambda x: '../../'+x, componentFiles);
 
 		if "template.php" in os.listdir(templateFolder):
 			if "component_epilog.php" not in os.listdir(templateFolder):
@@ -494,7 +577,7 @@ class BitrixTemplateMenuCommand(sublime_plugin.WindowCommand):
 			if "result_modifier.php" not in os.listdir(templateFolder):
 				pathList += ["create:result_modifier.php"]
 		return pathList;
-	def run(self): 
+	def run(self):
 		window = sublime.active_window();
 		window.show_quick_panel(self.getPathList(), self.on_chosen)
 	def on_chosen(self, index):
@@ -534,7 +617,7 @@ class BitrixComponentMenuCommand(sublime_plugin.WindowCommand):
 				fList = filter(lambda x: os.path.isfile(os.path.join(curDir,x)), os.listdir(curDir));
 				pathList += map(lambda x: "templates/"+template+"/"+x, fList);
 		return pathList;
-	def run(self): 
+	def run(self):
 		window = sublime.active_window();
 		# curFolder = window.folders()[0];
 		# self.getPathList();

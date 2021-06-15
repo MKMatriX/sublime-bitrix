@@ -1,43 +1,49 @@
 <?
-if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
-$arParams["CACHE_TIME"] = $arParams["CACHE_TIME"]? intval($arParams["CACHE_TIME"]) : 36000000;
+use Bitrix\Main\Engine\ActionFilter\Authentication;
+use Bitrix\Main\Engine\ActionFilter\Csrf;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Loader;
 
-// require_once("functions.php");
+class /*ComponentClassName*/ extends CBitrixComponent /*implements Controllerable*/ {
+	public function onPrepareComponentParams($arParams)
+	{
+		$arParams["CACHE_TIME"] = $arParams["CACHE_TIME"]? intval($arParams["CACHE_TIME"]) : 36000000;
+		return $arParams;
+	}
 
-/*********************************************************
-				   PREPARE DATA TO COOK
-*********************************************************/
 
-// //int
-// $arParams["IBLOCK_ID"] = intval($arParams["IBLOCK_ID"]);
-// $arParams["IBLOCK_ID"] = $arParams["IBLOCK_ID"]? $arParams["IBLOCK_ID"] : 0;
+	public function executeComponent() {
+		$this->arResult = [];
 
-// //string
-// $arParams["IBLOCK_TYPE"] = trim($arParams["IBLOCK_TYPE"]);
-// $arParams["IBLOCK_TYPE"] = strlen($arParams["IBLOCK_TYPE"])? $arParams["IBLOCK_TYPE"] : "main";
+		if ($this->StartResultCache()){
 
-// //array
-// $arParams["SOME_ARRAY"] = (is_array($arParams["SOME_ARRAY"])
-// 	&& !empty($arParams["SOME_ARRAY"]))? $arParams["SOME_ARRAY"] : array();
+			// if(!\Bitrix\Main\Loader::IncludeModule("iblock")){
+			// 	$this->AbortResultCache();
+			// 	ShowError("Модуль инфоблоков не установлен");
+			// 	return;
+			// }
 
-/*********************************************************
-					 MAKING DINNER
-*********************************************************/
+			$this->IncludeComponentTemplate();
+			// $this->EndResultCache();
+		}
+	}
 
-if ($this->StartResultCache()){
-	$arResult = array();
-	
-	// if(!\Bitrix\Main\Loader::IncludeModule("iblock")){
-	// 	$this->AbortResultCache();
-	// 	ShowError("Модуль инфоблоков не установлен");
-	// 	return;
+
+	// /**
+	//  * ajax/fetch configurantion
+	//  * @return array
+	//  */
+	// public function configureActions(): array {
+	// 	return [
+	// 		'ajaxMethodInThisClass' => [
+	// 			'prefilters' => [
+	// 				new Csrf(),
+	// 				new Authentication(),
+	// 			],
+	// 		],
+	// 	];
 	// }
 
-	$this->IncludeComponentTemplate();
-	// $this->EndResultCache();
+	// public function ajaxMethodInThisClassAction(int $id, bool $checked) {
+	// }
 }
-
-/*********************************************************
-				  LEAVE SOME BREADCRUMBS
-*********************************************************/
-?>
