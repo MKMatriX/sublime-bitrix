@@ -2,11 +2,23 @@
 use Bitrix\Main\Engine\ActionFilter\Authentication;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Error;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 
-class /*ComponentClassName*/ extends CBitrixComponent /*implements Controllerable*/ {
-	public function onPrepareComponentParams($arParams)
-	{
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
+class /*ComponentClassName*/ extends CBitrixComponent implements Controllerable, Errorable {
+	/** @var ErrorCollection */
+	public $errorCollection;
+
+	public function onPrepareComponentParams($arParams) {
+		$this->errorCollection = new ErrorCollection();
+
 		$arParams["CACHE_TIME"] = $arParams["CACHE_TIME"]? intval($arParams["CACHE_TIME"]) : 36000000;
 		return $arParams;
 	}
@@ -17,7 +29,7 @@ class /*ComponentClassName*/ extends CBitrixComponent /*implements Controllerabl
 
 		if ($this->StartResultCache()){
 
-			// if(!\Bitrix\Main\Loader::IncludeModule("iblock")){
+			// if(!Loader::IncludeModule("iblock")){
 			// 	$this->AbortResultCache();
 			// 	ShowError("Модуль инфоблоков не установлен");
 			// 	return;
@@ -46,4 +58,21 @@ class /*ComponentClassName*/ extends CBitrixComponent /*implements Controllerabl
 
 	// public function ajaxMethodInThisClassAction(int $id, bool $checked) {
 	// }
+
+	/**
+	 * Getting array of errors.
+	 * @return Error[]
+	 */
+	public function getErrors() {
+		return $this->errorCollection->toArray();
+	}
+
+	/**
+	 * Getting once error with the necessary code.
+	 * @param string $code Code of error.
+	 * @return Error
+	 */
+	public function getErrorByCode($code) {
+		return $this->errorCollection->getErrorByCode($code);
+	}
 }

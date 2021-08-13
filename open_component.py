@@ -21,8 +21,8 @@ def initial():
 	window = sublime.active_window()
 	rootFolder = sublime.active_window().folders(); #root folder
 	compenentsPaths = [
-		["bitrix", "components","$namespace", "$component", "component.php"],
-		["local", "components","$namespace", "$component", "component.php"]
+		["bitrix", "components","$namespace", "$component", "$|file|component.php|class.php"],
+		["local", "components","$namespace", "$component", "$|file|component.php|class.php"]
 	];
 	templatesPaths = [
 		["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
@@ -98,8 +98,8 @@ def arrayToPath(ar):
 
 rootFolder = sublime.active_window().folders(); #root folder
 compenentsPaths = [
-	["bitrix", "components","$namespace", "$component", "component.php"],
-	["local", "components","$namespace", "$component", "component.php"]
+	["bitrix", "components","$namespace", "$component", "$|file|component.php|class.php"],
+	["local", "components","$namespace", "$component", "$|file|component.php|class.php"]
 ];
 templatesPaths = [
 	["bitrix", "templates","$siteTemplate", "components", "$namespace", "$component", "$template", "template.php"],
@@ -224,8 +224,9 @@ class BitrixComponentsListCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		global compenentsList;
 		compenentsList = pathsToPaths(compenentsPaths);
+		compenentsList = [c for c in compenentsList if os.path.isfile(c['path'])]
 		panelList = []
-		panelList[:] = [c["namespace"]+":"+c["component"] for c in compenentsList]
+		panelList[:] = [c["namespace"]+":"+c["component"]+" "+c["file"] for c in compenentsList]
 		window.show_quick_panel(panelList, self.on_chosen)
 	def on_chosen(self, index):
 		if index == -1: return
